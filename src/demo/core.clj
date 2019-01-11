@@ -2,6 +2,9 @@
   (:require [etaoin.keys :as k]
             [etaoin.api :as api]))
 
+;this is a whole lot of examples
+;take a look at the utils namespace for things that might be missing from etaoin
+
 
 (def windows-driver-location "C:\\Windows\\chromedriver.exe")
 
@@ -79,23 +82,23 @@
 
 ;a little bit slower this time
 (api/doto-wait 2 driver
-  (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
-  (deal-with-alert)
-  (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
-  (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
-  (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-  (api/fill {:tag :textarea :placeholder "Text #4"} "..."))
+               (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
+               (deal-with-alert)
+               (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
+               (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
+               (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
+               (api/fill {:tag :textarea :placeholder "Text #4"} "..."))
 
 
 ;now we'll click to generate it
 (api/doto-wait 2 driver
-  (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
-  (deal-with-alert)
-  (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
-  (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
-  (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-  (api/fill {:tag :textarea :placeholder "Text #4"} "...")
-  (api/click "//*[@id=\"mm-settings\"]/div[8]/div[2]"))
+               (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
+               (deal-with-alert)
+               (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
+               (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
+               (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
+               (api/fill {:tag :textarea :placeholder "Text #4"} "...")
+               (api/click "//*[@id=\"mm-settings\"]/div[8]/div[2]"))
 
 ;let's just capture this as a unit of work
 (defn navigate-1 [driver]
@@ -131,29 +134,26 @@
 
 
 
+(defn right-click
+  "Sends a right click where the mouse is currently at.
+   same as:
+   <DRIVERURL>:<DRIVERPORT>/session/<SESSION>/click
+   with json payload:
+   {\"button\" : 2}"
+  [driver]
+  (api/with-resp
+    driver
+    :post
+    [:session (:session @driver) :click]
+    {:button 2}
+    resp
+    (:resp resp)))
 
-;wouldn't it be easier to just download the image?
-;(api/with-resp driver
-;  :post
-;  [:session (:session @driver) "chromium/send_command"]
-;  {:cmd    "Page.setDownloadBehavior"
-;   :params {:behavior     "allow"
-;            :downloadPath "./"}}
-;  _) ;unused response binding
-;
-;(defn modified-go [driver url]
-;  (api/with-resp driver :get
-;                 [:session (:session @driver) :url]
-;                 {:url url} _))
-;
-;(let [_ (navigate-1 driver)
-;      image-url (api/get-element-attr driver "//*[@id=\"doneImage\"]" :src)]
-;  (modified-go driver image-url))
-
-
-
-
-
+(defn save [driver querry]
+  (do
+    (api/mouse-move-to driver querry)
+    (right-click driver)
+    (api/fill-active driver k/arrow-down)))
 
 
 

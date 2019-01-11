@@ -46,8 +46,7 @@
 
 
 (defn send-keys
-  "Sends a set of keys to be pressed
-  Sends a right click where the mouse is currently at.
+  "Sends a set of keys to be pressed.
   same as:
   <DRIVERURL>:<DRIVERPORT>/session/<SESSION>/keys
   with json payload like:

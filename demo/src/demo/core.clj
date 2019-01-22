@@ -1,12 +1,14 @@
 (ns demo.core
   (:require [etaoin.keys :as k]
-            [etaoin.api :as api]))
+            [etaoin.api :as api]
+            [clj-http.client :as client])
+  (:import [java.io File FileOutputStream]))
 
 
 (def windows-driver-location "C:\\Windows\\chromedriver.exe")
 
 ;first you have to start the driver
-(defonce driver (api/chrome))
+(def driver (api/chrome))
 ;(defonce driver ((api/chrome-headless {})))
 
 ;;;;;;;clojure core cool function;;;;;;;;
@@ -56,14 +58,16 @@
 ;good for mutable things
 ;takes a object uses it as the first argument of following forms
 ;like -> only mutable
-()
+(->> 1
+     (+ 2)
+     )
 
 (doto driver
   (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
   (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
   (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
   (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-  (api/fill {:tag :textarea :placeholder "Text #4"} "..."))
+  (api/fill {:tag :textarea :placeholder "Text #4"} "Any time!"))
 
 (api/go driver "https://www.google.com")
 (api/has-alert? driver)
@@ -84,17 +88,17 @@
   (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
   (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
   (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-  (api/fill {:tag :textarea :placeholder "Text #4"} "..."))
+  (api/fill {:tag :textarea :placeholder "Text #4"} "Any time!"))
 
 
 ;now we'll click to generate it
-(api/doto-wait 2 driver
+(api/doto-wait 1 driver
   (api/go "https://imgflip.com/memegenerator/What-Do-We-Want")
   (deal-with-alert)
   (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
   (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
   (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-  (api/fill {:tag :textarea :placeholder "Text #4"} "...")
+  (api/fill-human {:tag :textarea :placeholder "Text #4"} "Any time!")
   (api/click "//*[@id=\"mm-settings\"]/div[8]/div[2]"))
 
 ;let's just capture this as a unit of work
@@ -105,7 +109,7 @@
     (api/fill {:tag :textarea :placeholder "Text #1"} "What do we want?")
     (api/fill {:tag :textarea :placeholder "Text #2"} "time travel")
     (api/fill {:tag :textarea :placeholder "Text #3"} "When do we want it?")
-    (api/fill {:tag :textarea :placeholder "Text #4"} "...")
+    (api/fill {:tag :textarea :placeholder "Text #4"} "Any time!")
     (api/click "//*[@id=\"mm-settings\"]/div[8]/div[2]")))
 
 
@@ -132,27 +136,38 @@
 
 
 
+
+
+
 ;wouldn't it be easier to just download the image?
-;(api/with-resp driver
-;  :post
-;  [:session (:session @driver) "chromium/send_command"]
-;  {:cmd    "Page.setDownloadBehavior"
-;   :params {:behavior     "allow"
-;            :downloadPath "./"}}
-;  _) ;unused response binding
-;
-;(defn modified-go [driver url]
-;  (api/with-resp driver :get
-;                 [:session (:session @driver) :url]
-;                 {:url url} _))
-;
-;(let [_ (navigate-1 driver)
-;      image-url (api/get-element-attr driver "//*[@id=\"doneImage\"]" :src)]
-;  (modified-go driver image-url))
+(defn enable-etaoin-downloads
+  "Enables downloads for driver in headless mode. Files will be saved in tmp-dir.
+
+   This makes use of an experimental chromium option as described here:
+   https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-setDownloadBehavior
+   https://github.com/igrishaev/etaoin/issues/170"
+  [driver tmp-dir]
+  (api/with-resp driver :post
+                 [:session (:session @driver) :chromium :send_command]
+                 {:cmd :Page.setDownloadBehavior, :params {:behavior :allow, :downloadPath tmp-dir}}
+                 _ nil))
+
+(defn write-file []
+  (with-open [w (clojure.java.io/output-stream "test-file.gif")]
+    (.write w (:body test-file))))
+
+(let [_ (navigate-1 driver)
+      _ (Thread/sleep 2000)
+      ;_ (api/wait-exists driver "//*[@id=\"doneImage\"]")
+      image-url (api/get-element-attr driver "//*[@id=\"doneImage\"]" :src)
+      _ (println image-url)]
+  (clojure.java.io/copy
+    (:body (client/get image-url {:as :stream}))
+    (File. "meme-downloaded.jpg")))
 
 
 
-
+(api/disconnect-driver driver)
 
 
 

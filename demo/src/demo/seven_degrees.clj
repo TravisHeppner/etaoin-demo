@@ -42,7 +42,7 @@
   "Grab all urls on a page
    Defaults to current driver page."
   ([driver url]
-   (do (wait driver 1)
+   (do                                                      ;(wait driver 1)
        (go driver url)
        (wait-exists driver ["//*[@id=\"mw-content-text\"]" {:tag :a}])
        (all-current-links driver)))

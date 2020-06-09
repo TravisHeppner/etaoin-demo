@@ -4,6 +4,9 @@
             [clj-http.client :as client])
   (:import [java.io File FileOutputStream]))
 
+;this is a whole lot of examples
+;take a look at the utils namespace for things that might be missing from etaoin
+
 
 (def windows-driver-location "C:\\Windows\\chromedriver.exe")
 
@@ -151,6 +154,20 @@
                  [:session (:session @driver) :chromium :send_command]
                  {:cmd :Page.setDownloadBehavior, :params {:behavior :allow, :downloadPath tmp-dir}}
                  _ nil))
+(defn right-click
+  "Sends a right click where the mouse is currently at.
+   same as:
+   <DRIVERURL>:<DRIVERPORT>/session/<SESSION>/click
+   with json payload:
+   {\"button\" : 2}"
+  [driver]
+  (api/with-resp
+    driver
+    :post
+    [:session (:session @driver) :click]
+    {:button 2}
+    resp
+    (:resp resp)))
 
 (defn write-file []
   (with-open [w (clojure.java.io/output-stream "test-file.gif")]
